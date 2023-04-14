@@ -6,6 +6,8 @@ using UnityEngine.UI;
 
 public class InstObj : MonoBehaviour
 {
+    public int inst_type;
+
     public SlotInfo slot_L;
     public SlotInfo slot_R;
     public SlotInfo slot_O;
@@ -21,11 +23,17 @@ public class InstObj : MonoBehaviour
     public InstObj parent_inst;
 
     public ArrObj next_arr;
+    public ArrObj arr0, arr1;
+    public List<ArrObj> arr_from;
+    public Transform inline;
 
     public List<GameObject> hider;
 
     public Transform main_canvas;
     public Image img;
+
+    public bool export_checked;
+    public int inst_index;
 
     readonly Color[] color = {
         new Color(0.8f, 0.8f, 0.8f, 1.0f),
@@ -46,7 +54,7 @@ public class InstObj : MonoBehaviour
         main_canvas = transform.parent;
     }
 
-    public VarInfo.VAL Operate()
+    public VarInfo.VAL Operate(Text con, InputField scn)
     {
         VarInfo.VAL rv = new VarInfo.VAL();
 
@@ -54,15 +62,62 @@ public class InstObj : MonoBehaviour
 
         if (passthru) return rv;
 
+        if (inst_type == 1)     // if
+        {
+            VarInfo.VAL temp_val = ReturnValue(slot_L, con, scn);
+
+            if (temp_val.type == 5) // bool type should be in the slot
+            {
+                if (temp_val.GetBool())
+                {
+                    next_arr = arr1;
+                }
+                else
+                {
+                    next_arr = arr0;
+                }
+                return temp_val;
+            }
+            else
+            {
+                // type error
+                return rv;
+            }
+        }
+        else if (inst_type == 2)    // scan
+        {
+            rv.SetValue(scn.text, slot_L.var.varInfo.type);
+            AssignValue(slot_L, rv);
+            next_arr = arr0;
+
+            return rv;
+        }
+        else if (inst_type == 3)    // print
+        {
+            con.text = string.Format("{0}{1}\n", con.text, ReturnValue(slot_L, con, scn).GetVal());
+            next_arr = arr0;
+
+            return ReturnValue(slot_L, con, scn);
+        }
+
         int op = 0;
         if (slot_O.oprt != null)
             op = slot_O.oprt.oprt_type;
 
-        VarInfo.VAL val_L = ReturnValue(slot_L);
-        VarInfo.VAL val_R = ReturnValue(slot_R);
+        VarInfo.VAL val_L = ReturnValue(slot_L, con, scn);
+        VarInfo.VAL val_R = ReturnValue(slot_R, con, scn);
 
         VarInfo.VAL val_res = new VarInfo.VAL();
         val_res.Init();
+
+        if (val_L.type < 0)
+        {
+            return val_L;
+        }
+        if (val_R.type < 0)
+        {
+            return val_R;
+        }
 
         if (op / 10 == 1) // if op is "+ - * / %"
         {
@@ -70,7 +125,14 @@ public class InstObj : MonoBehaviour
             {
                 case 1:
                 case 2:
-                    val_res.OpInt(val_L.GetInt(), val_R.GetInt(), op); type = 1; break; // *** consider situation where the left var is char!!
+                    if (slot_L.var.varInfo.type == 1)
+                    {
+                        val_res.OpInt(val_L.GetInt(), val_R.GetInt(), op); type = 1; break;
+                    }
+                    else
+                    {
+                        val_res.OpChar(val_L.GetInt(), val_R.GetInt(), op); type = 2; break;
+                    }
                 case 3:
                     val_res.OpFloat(val_L.GetFloat(), val_R.GetFloat(), op); type = 3; break;
                 case 4:
@@ -102,36 +164,71 @@ public class InstObj : MonoBehaviour
             type = val_R.type;
         }
 
-        img.color = type switch
+
+        if (parent_slot != null)
         {
-            1 => color[1],
-            2 => color[2],
-            3 => color[3],
-            4 => color[4],
-            5 => color[5],
-            _ => color[0],
-        };
+            img.color = type switch
+            {
+                1 => color[1],
+                2 => color[2],
+                3 => color[3],
+                4 => color[4],
+                5 => color[5],
+                _ => color[0],
+            };
+        }
+        else
+        {
+            next_arr = arr0;
+        }
+
 
         return val_res;
     }
 
     public string ExportAsText()
     {
-        if (passthru) return "Start";
+        if (passthru) return "(START)";
 
         int op = 0;
         if (slot_O.oprt != null)
+        {
             op = slot_O.oprt.oprt_type;
 
-        return op switch
+            return op switch
+            {
+                10 => string.Format("[ {0} ] + [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
+                11 => string.Format("[ {0} ] - [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
+                12 => string.Format("[ {0} ] * [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
+                13 => string.Format("[ {0} ] / [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
+                14 => string.Format("[ {0} ] % [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
+                20 => string.Format("[ {0} ] == [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
+                21 => string.Format("[ {0} ] > [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
+                22 => string.Format("[ {0} ] >= [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
+                23 => string.Format("[ {0} ] < [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
+                24 => string.Format("[ {0} ] <= [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
+                30 => string.Format("[ {0} ] && [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
+                31 => string.Format("[ {0} ] || [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
+                _ => string.Format("[ {0} ] = [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
+            };
+        }
+        else if (inst_type == 1)
         {
-            10 => string.Format("[ {0} ] + [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
-            11 => string.Format("[ {0} ] - [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
-            12 => string.Format("[ {0} ] * [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
-            13 => string.Format("[ {0} ] / [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
-            14 => string.Format("[ {0} ] % [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
-            _ => string.Format("[ {0} ] = [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R)),
-        };
+            return string.Format("(IF) {0}", ReturnValueAsText(slot_L));
+        }
+        else if (inst_type == 2)
+        {
+            return string.Format("(SCAN) {0}", ReturnValueAsText(slot_L));
+        }
+        else if (inst_type == 3)
+        {
+            return string.Format("(PRINT) {0}", ReturnValueAsText(slot_L));
+        }
+        else
+        {
+            return string.Format("(???) [ {0} ] ??? [ {1} ]", ReturnValueAsText(slot_L), ReturnValueAsText(slot_R));
+        }
+
     }
 
     public void AssignValue(SlotInfo slot, VarInfo.VAL val)
@@ -142,7 +239,7 @@ public class InstObj : MonoBehaviour
         }
     }
 
-    public VarInfo.VAL ReturnValue(SlotInfo slot)
+    public VarInfo.VAL ReturnValue(SlotInfo slot, Text con, InputField scn)
     {
         if (slot.var != null)
         {
@@ -150,7 +247,7 @@ public class InstObj : MonoBehaviour
         }
         else if (slot.inst != null)
         {
-            return slot.inst.Operate();
+            return slot.inst.Operate(con, scn);
         }
         else
         {
@@ -189,13 +286,24 @@ public class InstObj : MonoBehaviour
         v.y += Math.Max(slot_L.rect.sizeDelta.y, slot_R.rect.sizeDelta.y) + 32;
 
         v.x = -(slot_L.rect.sizeDelta.x + slot_O.rect.sizeDelta.x + slot_R.rect.sizeDelta.x + 64) * 0.5f;
-        v.x += 16 + slot_L.rect.sizeDelta.x * 0.5f;
-        slot_L.rect.anchoredPosition = new Vector2(v.x, slot_L.rect.anchoredPosition.y);
-        v.x += slot_L.rect.sizeDelta.x * 0.5f + 16 + slot_O.rect.sizeDelta.x * 0.5f;
-        slot_O.rect.anchoredPosition = new Vector2(v.x, slot_O.rect.anchoredPosition.y);
-        v.x += slot_O.rect.sizeDelta.x * 0.5f + 16 + slot_R.rect.sizeDelta.x * 0.5f;
-        slot_R.rect.anchoredPosition = new Vector2(v.x, slot_R.rect.anchoredPosition.y);
-        v.x += slot_R.rect.sizeDelta.x * 0.5f + 16;
+
+
+        if (inst_type == 0)
+        {
+            v.x += 16 + (slot_L.rect.sizeDelta.x) * 0.5f;
+            slot_L.rect.anchoredPosition = new Vector2(v.x, slot_L.rect.anchoredPosition.y);
+            v.x += slot_L.rect.sizeDelta.x * 0.5f + 16 + slot_O.rect.sizeDelta.x * 0.5f;
+            slot_O.rect.anchoredPosition = new Vector2(v.x, slot_O.rect.anchoredPosition.y);
+            v.x += slot_O.rect.sizeDelta.x * 0.5f + 16 + slot_R.rect.sizeDelta.x * 0.5f;
+            slot_R.rect.anchoredPosition = new Vector2(v.x, slot_R.rect.anchoredPosition.y);
+            v.x += slot_R.rect.sizeDelta.x * 0.5f + 16;
+        }
+        else
+        {
+            v.x += 32 + slot_L.rect.sizeDelta.x * 0.5f;
+            slot_L.rect.anchoredPosition = new Vector2(v.x, slot_L.rect.anchoredPosition.y);
+            v.x += slot_L.rect.sizeDelta.x * 0.5f + 32;
+        }
 
         v.x *= 2;
 
@@ -208,8 +316,12 @@ public class InstObj : MonoBehaviour
         if (slot_R.inst != null)
             slot_R.inst.rect.position = slot_R.rect.position;
 
-        if (parent_inst != null)
-            parent_inst.ResizeObj();
+        if (parent_slot != null)
+        {
+            parent_slot.rect.sizeDelta = v;
+            parent_slot.parent_inst.ResizeObj();
+        }
+            
     }
 
     public void OnDragBegin(BaseEventData data)
@@ -225,6 +337,39 @@ public class InstObj : MonoBehaviour
     {
         PointerEventData pointer_data = (PointerEventData)data;
         transform.position = Camera.main.ScreenToWorldPoint(pointer_data.position) + tmp_loc;
+
+        foreach (ArrObj a in arr_from)
+        {
+            Vector3 v3_o = a.line.GetPosition(3);
+            Vector3 v3 = a.line.transform.InverseTransformPoint(inline.position);
+            a.line.SetPosition(3, v3);
+
+            Vector3 v2 = a.line.GetPosition(2);
+            v2 = new Vector2((Math.Abs(v3_o.x - v2.x) < 1) ? v3.x : v2.x, (Math.Abs(v3_o.y - v2.y) < 1) ? v3.y : v2.y);
+            a.line.SetPosition(2, v2);
+        }
+
+        if (arr0 != null && arr0.next_inst != null)
+        {
+            Vector3 v3_o = arr0.line.GetPosition(3);
+            Vector3 v3 = arr0.line.transform.InverseTransformPoint(arr0.next_inst.inline.position);
+            arr0.line.SetPosition(3, v3);
+
+            Vector3 v2 = arr0.line.GetPosition(2);
+            v2 = new Vector2((Math.Abs(v3_o.x - v2.x) < 1) ? v3.x : v2.x, (Math.Abs(v3_o.y - v2.y) < 1) ? v3.y : v2.y);
+            arr0.line.SetPosition(2, v2);
+        }
+
+        if (arr1 != null && arr1.next_inst != null)
+        {
+            Vector3 v3_o = arr1.line.GetPosition(3);
+            Vector3 v3 = arr1.line.transform.InverseTransformPoint(arr1.next_inst.inline.position);
+            arr1.line.SetPosition(3, v3);
+
+            Vector3 v2 = arr1.line.GetPosition(2);
+            v2 = new Vector2((Math.Abs(v3_o.x - v2.x) < 1) ? v3.x : v2.x, (Math.Abs(v3_o.y - v2.y) < 1) ? v3.y : v2.y);
+            arr1.line.SetPosition(2, v2);
+        }
     }
 
     public void OnDragEnd(BaseEventData data)
@@ -242,7 +387,7 @@ public class InstObj : MonoBehaviour
             transform.position = parent_slot.transform.position;
             transform.SetParent(parent_slot.transform);
 
-            next_arr.DetachArrow();
+            arr0.DetachArrow();
             foreach (GameObject h in hider)
             {
                 h.SetActive(false);
@@ -273,7 +418,8 @@ public class InstObj : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D other)
     {
-        if (isHolded && other.CompareTag("slot") && Math.Abs(other.transform.position.x - transform.position.x) < 40 && Math.Abs(other.transform.position.y - transform.position.y) < 80)
+        if (inst_type == 0 && isHolded && other.CompareTag("slot")
+            && Math.Abs(other.transform.position.x - transform.position.x) < 40 && Math.Abs(other.transform.position.y - transform.position.y) < 80)
         {
             tmp_slot = other.transform;
             tmp_slot.GetComponent<Outline>().enabled = true;
@@ -282,7 +428,7 @@ public class InstObj : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (isHolded && other.CompareTag("slot") && tmp_slot != null)
+        if (inst_type == 0 && isHolded && other.CompareTag("slot") && tmp_slot != null)
         {
             tmp_slot.GetComponent<Outline>().enabled = false;
             tmp_slot = null;

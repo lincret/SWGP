@@ -126,7 +126,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   varname: 
-  type: 0
+  type: 1
   value: 0
   varnameText: {fileID: 0}
   valueText: {fileID: 7450550920761393754}

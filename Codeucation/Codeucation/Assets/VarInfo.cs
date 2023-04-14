@@ -78,6 +78,19 @@ public class VarInfo : MonoBehaviour
             err = string.Empty;
         }
 
+        public void SetValue(string value, int type)
+        {
+            switch (type)
+            {
+                case 1: SetInt(int.Parse(value)); break;
+                case 2: SetChar(char.Parse(value)); break;
+                case 3: SetFloat(float.Parse(value)); break;
+                case 4: SetString(value); break;
+                case 5: SetBool(value.Equals("true")); break;
+                default: break;
+            }
+        }
+
         public void SetVar(VAL v, int type)
         {
             switch (type)
@@ -104,6 +117,18 @@ public class VarInfo : MonoBehaviour
             };
 
             SetInt(res);
+        }
+
+        public void OpChar(int i1, int i2, int op)
+        {
+            int res = op switch
+            {
+                10 => i1 + i2,
+                11 => i1 - i2,
+                _ => 0,
+            };
+
+            SetChar((char)res);
         }
 
         public void CompInt(int i1, int i2, int op)
@@ -247,9 +272,23 @@ public class VarInfo : MonoBehaviour
 
             return b;
         }
+
+        public string GetVal()
+        {
+            switch (type)
+            {
+                case 1: return i.ToString();
+                case 2: return c.ToString();
+                case 3: return f.ToString();
+                case 4: return s;
+                case 5: return b.ToString();
+                default: err = "Invalid Type"; type = -1; return string.Empty;
+            }
+        }
     }
 
     public VAL v;
+    public VAL v_init;
 
     public int type;
     public string value;
@@ -275,15 +314,7 @@ public class VarInfo : MonoBehaviour
     {
         this.value = value;
 
-        switch (type)
-        {
-            case 1: v.SetInt(int.Parse(value)); break;
-            case 2: v.SetChar(char.Parse(value)); break; 
-            case 3: v.SetFloat(float.Parse(value)); break;
-            case 4: v.SetString(value); break;
-            case 5: v.SetBool(value.Equals("true")); break;
-            default: break;
-        }
+        v.SetValue(value, type);
 
         valueText.text = value;
     }
