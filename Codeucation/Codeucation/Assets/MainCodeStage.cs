@@ -58,6 +58,28 @@ public class MainCodeStage : MonoBehaviour
         StartCoroutine(RunCode(true));
     }
 
+    void ParseSampleCode()
+    {
+        StreamReader sr = new StreamReader(Application.persistentDataPath + "/Codeucation_samplecode.txt");
+        string codetxt = sr.ReadToEnd().Replace("\r", string.Empty);
+
+        string[] line = codetxt.Split('\n');
+
+        for (int i = 0; i < line.Length; i++)
+        {
+            string[] w = line[i].Split(' ', '\t');
+
+            if (w[0].Equals("VAR"))
+            {
+
+            }
+            else if (w[0].Equals("ln"))
+            { 
+            
+            }
+        }
+    }
+
     void SetButtonState(bool runnable)
     {
         TestRun.interactable = runnable;
@@ -243,6 +265,8 @@ public class MainCodeStage : MonoBehaviour
             if ((val = inst.Operate(ConsoleArea, ScanInputArea)).type < 0)
             {
                 ConsoleArea.text = string.Format("{0}<color=#FF4444>{1}</color>\n", ConsoleArea.text, val.err);
+                inst.outline.enabled = false;
+                break;
             }
             
             yield return wfs;

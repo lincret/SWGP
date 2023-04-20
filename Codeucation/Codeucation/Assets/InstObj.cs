@@ -41,7 +41,8 @@ public class InstObj : MonoBehaviour
         new Color(0.2f, 0.7f, 0.4f, 1.0f),
         new Color(0.55f, 0.95f, 1.0f, 1.0f),
         new Color(0.4f, 0.8f, 0.65f, 1.0f),
-        new Color(1.0f, 0.95f, 0.55f, 1.0f)
+        new Color(1.0f, 0.95f, 0.55f, 1.0f),
+        new Color(1.0f, 0.4f, 0.4f, 1.0f)
     };
 
     public bool passthru;
@@ -127,19 +128,31 @@ public class InstObj : MonoBehaviour
                 case 2:
                     if (slot_L.var.varInfo.type == 1)
                     {
-                        val_res.OpInt(val_L.GetInt(), val_R.GetInt(), op); type = 1; break;
+                        val_res.OpInt(val_L.GetInt(), val_R.GetInt(), op);
+                        val_res.type = val_L.type < 0 || val_R.type < 0 ? -1 : 1;
+                        break;
                     }
                     else
                     {
-                        val_res.OpChar(val_L.GetInt(), val_R.GetInt(), op); type = 2; break;
+                        val_res.OpChar(val_L.GetInt(), val_R.GetInt(), op);
+                        val_res.type = val_L.type < 0 || val_R.type < 0 ? -1 : 2; 
+                        break;
                     }
                 case 3:
-                    val_res.OpFloat(val_L.GetFloat(), val_R.GetFloat(), op); type = 3; break;
+                    val_res.OpFloat(val_L.GetFloat(), val_R.GetFloat(), op);
+                    val_res.type = val_L.type < 0 || val_R.type < 0 ? -1 : 3; 
+                    break;
                 case 4:
-                    val_res.OpString(val_L.GetString(), val_R.GetString(), op); type = 4; break;
+                    val_res.OpString(val_L.GetString(), val_R.GetString(), op);
+                    val_res.type = val_L.type < 0 || val_R.type < 0 ? -1 : 4;
+                    break;
                 default:
+                    val_res.err = "Invalid Type";
+                    val_res.type = -1;
                     break; // do not allow bool variables
             };
+
+            type = val_res.type;
         }
         else if (op / 10 == 2) // if op is "== > >= < <="
         {
@@ -147,21 +160,71 @@ public class InstObj : MonoBehaviour
             {
                 case 1:
                 case 2:
-                    val_res.CompInt(val_L.GetInt(), val_R.GetInt(), op); type = 5; break;
+                    val_res.CompInt(val_L.GetInt(), val_R.GetInt(), op);
+                    val_res.type = val_L.type < 0 || val_R.type < 0 ? -1 : 5;
+                    break;
                 case 3:
-                    val_res.CompFloat(val_L.GetFloat(), val_R.GetFloat(), op); type = 5; break;
+                    val_res.CompFloat(val_L.GetFloat(), val_R.GetFloat(), op);
+                    val_res.type = val_L.type < 0 || val_R.type < 0 ? -1 : 5;
+                    break;
                 case 4:
-                    val_res.CompString(val_L.GetString(), val_R.GetString(), op); type = 5; break;
+                    val_res.CompString(val_L.GetString(), val_R.GetString(), op);
+                     val_res.type = val_L.type < 0 || val_R.type < 0 ? -1 : 5;
+                    break;
                 case 5:
-                    val_res.CompBool(val_L.GetBool(), val_R.GetBool(), op); type = 5; break;
+                    val_res.CompBool(val_L.GetBool(), val_R.GetBool(), op);
+                    val_res.type = val_L.type < 0 || val_R.type < 0 ? -1 : 5;
+                    break;
                 default:
+                    val_res.err = "Invalid Type";
+                    val_res.type = -1;
                     break; // do not allow other variables?
             };
+
+            type = val_res.type;
         }
         else // if op is "<-" (=)
         {
-            AssignValue(slot_L, val_R);
-            type = val_R.type;
+            switch (slot_L.var.varInfo.type)
+            {
+                case 1:
+                    if (val_R.Assignable(1))
+                        val_res.SetInt(val_R.GetInt());
+                    else
+                        val_res.SetError("Invalid Type");
+                    break;
+                case 2:
+                    if (val_R.Assignable(2))
+                        val_res.SetChar((char)val_R.GetInt());
+                    else
+                        val_res.SetError("Invalid Type");
+                    break;
+                case 3:
+                    if (val_R.Assignable(3))
+                        val_res.SetFloat(val_R.GetFloat());
+                    else
+                        val_res.SetError("Invalid Type");
+                    break;
+                case 4:
+                    if (val_R.Assignable(4))
+                        val_res.SetString(val_R.GetString());
+                    else
+                        val_res.SetError("Invalid Type");
+                    break;
+                case 5:
+                    if (val_R.Assignable(5))
+                        val_res.SetBool(val_R.GetBool());
+                    else
+                        val_res.SetError("Invalid Type");
+                    break;
+                default:
+                    val_res.err = "Invalid Type";
+                    val_res.type = -1;
+                    break; // do not allow bool variables
+            };
+
+            AssignValue(slot_L, val_res);
+            type = val_res.type;
         }
 
 
@@ -174,11 +237,17 @@ public class InstObj : MonoBehaviour
                 3 => color[3],
                 4 => color[4],
                 5 => color[5],
+                -1 => color[6],
                 _ => color[0],
             };
         }
         else
         {
+            img.color = type switch
+            {
+                -1 => color[6],
+                _ => color[0],
+            };
             next_arr = arr0;
         }
 

@@ -78,6 +78,12 @@ public class VarInfo : MonoBehaviour
             err = string.Empty;
         }
 
+        public void SetError(string msg)
+        {
+            type = -1;
+            err = msg;
+        }
+
         public void SetValue(string value, int type)
         {
             switch (type)
@@ -113,6 +119,7 @@ public class VarInfo : MonoBehaviour
                 12 => i1 * i2,
                 13 => i1 / i2,
                 14 => i1 % i2,
+                0 => i2,
                 _ => 0,
             };
 
@@ -125,6 +132,7 @@ public class VarInfo : MonoBehaviour
             {
                 10 => i1 + i2,
                 11 => i1 - i2,
+                0 => i2,
                 _ => 0,
             };
 
@@ -155,6 +163,7 @@ public class VarInfo : MonoBehaviour
                 12 => f1 * f2,
                 13 => f1 / f2,
                 14 => f1 % f2,
+                0 => f2,
                 _ => 0,
             };
 
@@ -181,6 +190,7 @@ public class VarInfo : MonoBehaviour
             string res = op switch
             {
                 10 => s1 + s2,
+                0 => s2,
                 _ => string.Empty,
             };
 
@@ -211,6 +221,7 @@ public class VarInfo : MonoBehaviour
                 22 => b1.CompareTo(b2) >= 0,
                 23 => b1.CompareTo(b2) < 0,
                 24 => b1.CompareTo(b2) <= 0,
+                0 => b2,
                 _ => false,
             };
 
@@ -273,6 +284,19 @@ public class VarInfo : MonoBehaviour
             return b;
         }
 
+        public bool Assignable(int t)
+        {
+            switch (t)
+            {
+                case 1: return type == 1 || type == 2;
+                case 2: return type == 1 || type == 2;
+                case 3: return type == 1 || type == 2 || type == 3;
+                case 4: return type == 1 || type == 2 || type == 3 || type == 4;
+                case 5: return type == 5;
+                default: return false;
+            }
+        }
+
         public string GetVal()
         {
             switch (type)
@@ -313,9 +337,6 @@ public class VarInfo : MonoBehaviour
     public void SetValue(string value)
     {
         this.value = value;
-
-        v.SetValue(value, type);
-
         valueText.text = value;
     }
 
@@ -330,6 +351,7 @@ public class VarInfo : MonoBehaviour
             3 => v.f.ToString(),
             4 => v.s.ToString(),
             5 => v.b.ToString(),
+            -1 => value,
             _ => v.i.ToString(),
         };
 
@@ -343,6 +365,34 @@ public class VarInfo : MonoBehaviour
 
     public void ParseString()
     {
+        string s = valueText.text;
+
+        if (int.TryParse(s, out int i))
+        {
+            type = 1;
+            v.SetInt(i);
+        }
+        else if (float.TryParse(s, out float f))
+        {
+            type = 3;
+            v.SetFloat(f);
+        }
+        else if (char.TryParse(s, out char c))
+        {
+            type = 2;
+            v.SetChar(c);
+        }
+        else if (bool.TryParse(s, out bool b))
+        {
+            type = 5;
+            v.SetBool(b);
+        }
+        else
+        {
+            type = 4;
+            v.SetString(s);
+        }
+
         SetValue(valueText.text);
     }
 }

@@ -123,4 +123,10 @@ public class VarObj : MonoBehaviour
             tmp_slot = null;
         }
     }
+
+    public void SetSize()
+    {
+        float x = rect.sizeDelta.x + text.GetComponent<RectTransform>().sizeDelta.x + 120;
+        rect.sizeDelta = new Vector2(x, rect.sizeDelta.y);
+    }
 }
