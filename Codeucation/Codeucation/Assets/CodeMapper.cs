@@ -4,15 +4,71 @@ using UnityEngine;
 
 public class CodeMapper
 {
-    //public List<MapperVarInfo> mapperVarInfo;
+    public List<MapperVarInfo> mapperVarInfo;
     public List<MapperLineInfo> mapperLineInfo;
     public int[] varindexcnt;
 
     public CodeMapper()
     {
-        //mapperVarInfo = new List<MapperVarInfo>();
+        mapperVarInfo = new List<MapperVarInfo>();
         mapperLineInfo = new List<MapperLineInfo>();
         varindexcnt = new int[6];
+    }
+
+    public void AddMapperVarinfo(int vartype, string initval)
+    {
+        mapperVarInfo.Add(new MapperVarInfo(vartype, initval));
+        varindexcnt[vartype]++;
+
+    }
+
+    public void AddMapperLineinfo(int ln, int next0, int next1, string line)
+    {
+        mapperLineInfo.Add(new MapperLineInfo(ln, next0, next1, line));
+    }
+}
+
+public class LineMatcher
+{
+    public bool mapped;
+    public MapperLineInfo targetLine;
+    public MapperLineInfo mappedLine;
+    public double similarity;
+
+    public LineMatcher(MapperLineInfo targetLine)
+    {
+        mapped = false;
+        this.targetLine = targetLine;
+        mappedLine = null;
+    }
+
+    public void MatchLine(MapperLineInfo mappedLine, double similarity)
+    {
+        this.mappedLine = mappedLine;
+        this.similarity = similarity;
+        mapped = true;
+
+        Debug.LogFormat("{0} matched to {1}", targetLine.line, this.mappedLine.line);
+    }
+}
+
+public class VarMatcher
+{
+    public bool mapped;
+    public MapperVarInfo targetVar;
+    public MapperVarInfo mappedVar;
+
+    public VarMatcher(MapperVarInfo targetVar)
+    {
+        mapped = false;
+        this.targetVar = targetVar;
+        mappedVar = null;
+    }
+
+    public void MatchVar(MapperVarInfo mappedVar)
+    {
+        this.mappedVar = mappedVar;
+        mapped = true;
     }
 }
 

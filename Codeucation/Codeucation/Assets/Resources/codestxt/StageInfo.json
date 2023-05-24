@@ -1,0 +1,39 @@
+{
+  "stages": [
+    {
+      "num": 1,
+      "question": "Print integer 3.",
+		"diff": 1
+    },
+    {
+      "num": 2,
+      "question": "Print all the positive integers from 1 to 10, in ascending order.",
+		"diff": 1
+    },
+    {
+      "num": 3,
+      "question": "Print all the positive integers from 10 to 1, in descending order.",
+		"diff": 2
+    },
+    {
+      "num": 4,
+      "question": "Print all the positive multiples of 5 up to 30, in ascending order.",
+		"diff": 2
+    },
+    {
+      "num": 5,
+      "question": "Print out the uppercase letters from A to Z, in their alphabetical order.",
+		"diff": 2
+    },
+    {
+      "num": 6,
+      "question": "Print out the integers in the difference progression (1, 2, 4, 7, 11, 16, ...) not exceeding 100.",
+		"diff": 3
+    },
+    {
+      "num": 7,
+      "question": "Print out the integers in Fibonacci sequence (1, 1, 2, 3, 5, 8, ...) not exceeding 1000.",
+		"diff": 3
+    }
+  ]
+}

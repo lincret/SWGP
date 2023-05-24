@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class VarInfo : MonoBehaviour
 {
     public string varname;
+    public string mappername;
 
     public struct VAL
     {

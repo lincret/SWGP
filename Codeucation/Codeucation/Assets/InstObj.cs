@@ -324,7 +324,7 @@ public class InstObj : MonoBehaviour
         }
     }
 
-    public string ReturnValueAsText(SlotInfo slot)
+    public string ReturnValueAsText(SlotInfo slot, bool mappermode)
     {
         if (slot.var != null)
         {
@@ -334,8 +334,14 @@ public class InstObj : MonoBehaviour
             }
             else
             {
-                return string.Format("v:{0}", slot.var.varInfo.varname.ToString());
-
+                if (mappermode)
+                {
+                    return string.Format("v:{0}", slot.var.varInfo.mappername);
+                }
+                else
+                {
+                    return string.Format("v:{0}", slot.var.varInfo.varname.ToString());
+                }
             }
         }
         else if (slot.inst != null)
@@ -346,6 +352,10 @@ public class InstObj : MonoBehaviour
         {
             return string.Empty;
         }
+    }
+    public string ReturnValueAsText(SlotInfo slot)
+    {
+        return ReturnValueAsText(slot, true);
     }
 
     public void ResizeObj()

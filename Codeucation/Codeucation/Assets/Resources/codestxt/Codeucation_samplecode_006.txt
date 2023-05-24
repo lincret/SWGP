@@ -1,0 +1,14 @@
+VAR	int	int1	1
+VAR	int	int2	0
+ln 1	(START)
+2	-1
+ln 2	[ v:int3 ] = [ [ v:int3 ] + [ v:int4 ] ]
+3	-1
+ln 3	(IF) [ v:int3 ] <= [ 100 ]
+4	5
+ln 4	(END)
+-1	-1
+ln 5	(PRINT) v:int3
+6	-1
+ln 6	[ v:int4 ] = [ [ v:int4 ] + [ 1 ] ]
+2	-1

@@ -1,0 +1,11 @@
+VAR	int	int1	0
+ln 1	(START)
+2	-1
+ln 2	[ v:int1 ] = [ [ v:int1 ] + [ 5 ] ]
+3	-1
+ln 3	(PRINT) v:int1
+4	-1
+ln 4	(IF) [ v:int1 ] >= [ 30 ]
+2	5
+ln 5	(END)
+-1	-1

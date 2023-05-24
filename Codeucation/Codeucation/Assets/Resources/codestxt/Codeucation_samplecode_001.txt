@@ -1,0 +1,7 @@
+VAR	int	int1	3
+ln 1	(START)
+2	-1
+ln 2	(PRINT) v:int1
+3	-1
+ln 3	(END)
+-1	-1
